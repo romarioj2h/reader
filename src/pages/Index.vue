@@ -22,12 +22,15 @@
       @click="load"
     >
     </q-btn>
+    <div id="book-view"></div>
   </q-page>
 </template>
 
 <script>
 import { defineComponent } from 'vue';
 const { fs, path } = require('filer');
+import ePub from 'epubjs';
+import { Buffer } from 'buffer';
 
 export default defineComponent({
   name: 'PageIndex',
@@ -40,10 +43,9 @@ export default defineComponent({
   methods: {
     save: function () {
       this.file.stream().getReader().read().then(data => {
-        this.fileContent = (new TextDecoder()).decode(data.value);
         const filename = path.join('/', 'first.txt');
 
-        fs.writeFile(filename, this.fileContent, (err) => {
+        fs.writeFile(filename, Buffer.from(data.value), (err) => {
           if (err) {
             return console.error('Unable to write /docs/first.txt', err);
           }
@@ -59,8 +61,26 @@ export default defineComponent({
     },
     load: function () {
       const filename = path.join('/', 'first.txt');
-      fs.readFile(filename, 'utf8', (err, content) => {
-        this.fileContent = content;
+      fs.readFile(filename, (err, content) => {
+        let book = ePub();
+        book.open(content, 'binary')
+        let render = book.renderTo('book-view');
+        render.display();
+        var keyListener = function(e){
+
+          // Left Key
+          if ((e.keyCode || e.which) == 37) {
+            render.prev();
+          }
+
+          // Right Key
+          if ((e.keyCode || e.which) == 39) {
+            render.next();
+          }
+
+        };
+
+        render.on("keyup", keyListener);
       })
     }
   }
