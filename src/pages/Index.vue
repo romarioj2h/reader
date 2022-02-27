@@ -1,88 +1,63 @@
 <template>
-  <q-page class="flex flex-center">
-    <form @submit.prevent="save" class="q-pa-md">
-      <q-file outlined v-model="file">
-        <template v-slot:prepend>
-          <q-icon name="attach_file" />
-        </template>
-      </q-file>
-      <q-btn
-        type="submit"
-        label="Save"
-        class="q-mt-md"
-        color="teal"
-      >
-      </q-btn>
-    </form>
-    <p>File: {{ fileContent }}</p>
-    <q-btn
-      label="Load"
-      class="q-mt-md"
-      color="teal"
-      @click="load"
-    >
-    </q-btn>
-    <div id="book-view"></div>
+  <q-page class="flex fit row wrap justify-start items-start content-start">
+    <div v-for="book in books" v-bind:key="book.id" class="q-pa-sm col-lg-4 col-sm-6 col-xs-12">
+      <q-card class="my-card">
+        <q-card-section class="bg-primary text-white">
+          <div class="text-h6">{{ book.title }}</div>
+          <div class="text-subtitle2">by {{ book.author }}</div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right">
+          <q-btn color="primary" flat>Read</q-btn>
+          <q-btn color="negative" flat>Delete</q-btn>
+        </q-card-actions>
+      </q-card>
+    </div>
+    <q-page-sticky position="bottom-right" :offset="[18, 18]">
+      <q-btn fab icon="add" color="primary" label="Add book" @click="addBookDialog = true" />
+    </q-page-sticky>
+    <q-dialog v-model="addBookDialog">
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6">Add new book</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-file outlined v-model="file" label="Click to choose">
+            <template v-slot:prepend>
+              <q-icon name="attach_file" />
+            </template>
+          </q-file>
+        </q-card-section>
+
+        <q-card-actions align="right" class="text-primary">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn flat label="Add" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script>
 import { defineComponent } from 'vue';
-const { fs, path } = require('filer');
-import ePub from 'epubjs';
-import { Buffer } from 'buffer';
+import {BookLibrary} from "src/lib/BookLibrary";
 
 export default defineComponent({
-  name: 'PageIndex',
-  data () {
+  name: 'Index',
+  data() {
     return {
+      bookLibrary: null,
+      books: [],
       file: null,
-      fileContent: ''
+      addBookDialog: false
     }
   },
-  methods: {
-    save: function () {
-      this.file.stream().getReader().read().then(data => {
-        const filename = path.join('/', 'first.txt');
-
-        fs.writeFile(filename, Buffer.from(data.value), (err) => {
-          if (err) {
-            return console.error('Unable to write /docs/first.txt', err);
-          }
-
-          fs.stat(filename, (err, stats) =>  {
-            if (err) {
-              return console.error('Unable to stat /docs/first.txt', err);
-            }
-            console.log('Stats for /docs/first.txt:', stats);
-          });
-        });
-      })
-    },
-    load: function () {
-      const filename = path.join('/', 'first.txt');
-      fs.readFile(filename, (err, content) => {
-        let book = ePub();
-        book.open(content, 'binary')
-        let render = book.renderTo('book-view');
-        render.display();
-        var keyListener = function(e){
-
-          // Left Key
-          if ((e.keyCode || e.which) == 37) {
-            render.prev();
-          }
-
-          // Right Key
-          if ((e.keyCode || e.which) == 39) {
-            render.next();
-          }
-
-        };
-
-        render.on("keyup", keyListener);
-      })
-    }
+  mounted() {
+    this.bookLibrary = new BookLibrary();
+    this.books = this.bookLibrary.getAvailableBooks();
   }
 })
 </script>
