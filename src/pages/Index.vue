@@ -34,7 +34,7 @@
 
         <q-card-actions align="right" class="text-primary">
           <q-btn flat label="Cancel" v-close-popup />
-          <q-btn flat label="Add" v-close-popup />
+          <q-btn flat label="Add" v-close-popup @click="saveBook" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -43,7 +43,7 @@
 
 <script>
 import { defineComponent } from 'vue';
-import {BookLibrary} from "src/lib/BookLibrary";
+import {BookLibrary} from "src/lib/service/BookLibrary";
 
 export default defineComponent({
   name: 'Index',
@@ -58,6 +58,11 @@ export default defineComponent({
   mounted() {
     this.bookLibrary = new BookLibrary();
     this.books = this.bookLibrary.getAvailableBooks();
+  },
+  methods: {
+    saveBook: function () {
+      (new BookLibrary()).saveNewBook(this.file);
+    }
   }
 })
 </script>
